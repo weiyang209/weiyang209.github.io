@@ -3,15 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Enter the homepage at the top instead of restoring a previous scroll position.
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        const resetHomepageScroll = () => {
+            if (location.hash && location.hash !== '#about') return;
+            if (location.hash === '#about') {
+                const homepageUrl = new URL(location.href);
+                homepageUrl.hash = '';
+                history.replaceState(history.state, '', homepageUrl.href);
+            }
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        };
+        resetHomepageScroll();
+        window.addEventListener('pageshow', resetHomepageScroll);
+        window.addEventListener('popstate', () => {
+            if (!location.hash || location.hash === '#about') {
+                resetHomepageScroll();
+            } else {
+                document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
+            }
+        });
+    </script>
     <title>Wei Yang — Homepage</title>
-    <meta name="description" content="Wei Yang — Undergraduate Student at North China Electric Power University. Research interests in Multimodal Large Language Models, Medical AI.">
-    <link rel="icon" href="photo.jpg">
+    <meta name="description" content="Wei Yang — Incoming master's student at USTC BIVLab, expected to enroll in September 2027. Research interests in multimodal large language models and agent systems.">
+    <link rel="icon" href="assets/photo.jpg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #fafaf8;
+            --bg: #ffffff;
             --surface: #ffffff;
             --border: #e8e6e1;
             --border-light: #f0ede8;
@@ -25,7 +49,15 @@
             --success-text: #2e7d32;
             --highlight-bg: #fffbf0;
             --highlight-border: #e6c87a;
-            --sidebar-w: 250px;
+            --sidebar-w: 234px;
+            --avatar-size: 144px;
+            --sidebar-inset: calc((var(--sidebar-w) - var(--avatar-size)) / 2);
+            --page-width: 1040px;
+            --page-gutter: 32px;
+            --nav-height: 56px;
+            --content-top-gap: 20px;
+            --sidebar-top-gap: 40px;
+            --column-gap: 48px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,6 +74,7 @@
 
         html {
             scroll-behavior: smooth;
+            overscroll-behavior-y: none;
         }
 
         /* ── Top Navigation ── */
@@ -49,24 +82,26 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(250, 250, 248, 0.92);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
         }
 
         .topnav-inner {
-            max-width: 1260px;
+            max-width: var(--page-width);
             margin: 0 auto;
-            padding: 0 16px;
-            height: 56px;
-            display: flex;
+            padding: 0 var(--page-gutter);
+            padding-right: calc(var(--page-gutter) + var(--sidebar-inset));
+            height: var(--nav-height);
+            display: grid;
+            grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
             align-items: center;
-            justify-content: space-between;
-            gap: 24px;
+            gap: var(--column-gap);
         }
 
         .topnav-logo {
+            justify-self: center;
             font-family: 'Crimson Pro', Georgia, serif;
             font-size: 17px;
             font-weight: 700;
@@ -80,17 +115,19 @@
 
         .topnav-links {
             display: flex;
-            gap: 28px;
+            justify-content: center;
+            gap: clamp(20px, 3vw, 48px);
             list-style: none;
         }
 
+        .topnav-links li { white-space: nowrap; }
+
         .topnav-links a {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 500;
             color: var(--text-secondary);
             text-decoration: none;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+            letter-spacing: 0;
             transition: color 0.18s ease;
             padding: 4px 0;
             position: relative;
@@ -114,11 +151,12 @@
 
         /* ── Layout: sidebar + main ── */
         .layout {
-            max-width: 1260px;
+            max-width: var(--page-width);
             margin: 0 auto;
-            padding: 56px 16px 80px;
+            padding: var(--content-top-gap) var(--page-gutter) 80px;
+            padding-right: calc(var(--page-gutter) + var(--sidebar-inset));
             display: flex;
-            gap: 56px;
+            gap: var(--column-gap);
             align-items: flex-start;
         }
 
@@ -126,16 +164,30 @@
         .sidebar {
             width: var(--sidebar-w);
             flex-shrink: 0;
-            position: sticky;
-            top: 72px;
+            position: fixed;
+            left: calc(max(0px, (100% - var(--page-width)) / 2) + var(--page-gutter));
+            top: calc(var(--nav-height) + 1px + var(--sidebar-top-gap));
+            max-height: calc(100vh - var(--nav-height) - 1px - var(--sidebar-top-gap) - 8px);
             display: flex;
             flex-direction: column;
+            align-items: center;
+            text-align: left;
             gap: 20px;
         }
 
+        .sidebar-info,
+        .sidebar-links {
+            align-self: flex-start;
+            width: calc((100% + var(--avatar-size)) / 2);
+            margin-left: calc((100% - var(--avatar-size)) / 2);
+        }
+
+        .sidebar-info { flex-shrink: 0; }
+
         .sidebar-avatar-wrap {
+            flex-shrink: 0;
             position: relative;
-            width: 160px;
+            width: var(--avatar-size);
         }
 
         .sidebar-avatar-wrap::after {
@@ -150,7 +202,7 @@
         .sidebar-avatar {
             width: 100%;
             aspect-ratio: 1;
-            max-width: 160px;
+            max-width: var(--avatar-size);
             border-radius: 50%;
             object-fit: cover;
             display: block;
@@ -171,7 +223,6 @@
             color: var(--accent);
             font-weight: 500;
             letter-spacing: 0.04em;
-            text-transform: uppercase;
             margin-top: 4px;
         }
 
@@ -183,8 +234,11 @@
         }
 
         .sidebar-links {
+            min-height: 0;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
+            align-items: flex-start;
             gap: 6px;
         }
 
@@ -195,9 +249,9 @@
             font-size: 0.82em;
             color: var(--text-secondary);
             text-decoration: none;
-            padding: 6px 10px;
+            padding: 6px 0;
             border-radius: 8px;
-            border: 1px solid transparent;
+            border: 0;
             background: transparent;
             transition: all 0.18s ease;
             font-weight: 500;
@@ -219,7 +273,7 @@
         }
 
         /* ── Main Content ── */
-        .main { flex: 1; min-width: 0; }
+        .main { flex: 1; min-width: 0; margin-left: calc(var(--sidebar-w) + var(--column-gap)); }
 
         /* ── Sections ── */
         .section {
@@ -229,7 +283,7 @@
 
         .section-label {
             font-family: 'Crimson Pro', Georgia, serif;
-            font-size: 1.25em;
+            font-size: 1.5em;
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 16px;
@@ -241,190 +295,205 @@
         p { margin-bottom: 10px; }
         p:last-child { margin-bottom: 0; }
 
+        .intro {
+            color: var(--text-secondary);
+            scroll-margin-top: calc(var(--nav-height) + 1px + var(--content-top-gap));
+        }
+        .intro p { margin-bottom: 14px; }
+        .intro a { color: var(--accent); text-underline-offset: 3px; }
+
+        .research-interests {
+            list-style: disc;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .research-interests strong { font-weight: 600; }
+
         /* ── News ── */
         .news-list { list-style: disc; padding-left: 20px; margin: 0; display: flex; flex-direction: column; gap: 8px; }
         .news-list li { font-size: 0.88em; color: var(--text-secondary); line-height: 1.5; }
         .news-list li strong { color: var(--text-primary); }
 
         /* ── Education ── */
+        .education-timeline {
+            position: relative;
+            list-style: none;
+            padding: 6px 0 0;
+            margin: 0;
+        }
+
+        .education-timeline::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            bottom: 30px;
+            left: 74px;
+            width: 1px;
+            background: #d9dde1;
+        }
+
         .edu-entry {
+            display: grid;
+            grid-template-columns: 64px 20px minmax(0, 1fr);
+            min-height: 100px;
+        }
+
+        .edu-logo {
+            display: block;
+            width: 48px;
+            height: 48px;
+            margin-top: 2px;
+            object-fit: contain;
+        }
+
+        .edu-marker {
+            position: relative;
+            z-index: 1;
+            justify-self: center;
+            width: 8px;
+            height: 8px;
+            margin-top: 10px;
+            border: 1px solid #777b80;
+            border-radius: 50%;
+            background: var(--bg);
+        }
+
+        .edu-entry-current .edu-marker {
+            border-color: #2f3133;
+            background: #2f3133;
+        }
+
+        .edu-content {
+            min-width: 0;
+            padding: 4px 0 28px;
+        }
+
+        .edu-header {
             display: flex;
-            gap: 14px;
-            padding: 14px 0;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .edu-entry:last-child { border-bottom: none; }
-
-        .edu-period {
-            font-size: 0.8em;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-tertiary);
-            padding-top: 3px;
-            min-width: 80px;
-            flex-shrink: 0;
-        }
-
-        .edu-content {}
-
-        .edu-degree {
-            font-weight: 600;
-            font-size: 0.92em;
-            color: var(--text-primary);
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 4px 16px;
         }
 
         .edu-school {
-            font-size: 0.88em;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-
-        .edu-detail {
-            font-size: 0.82em;
-            color: var(--text-tertiary);
-            margin-top: 3px;
-        }
-
-        /* ── Papers ── */
-        .paper-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 22px 26px;
-            margin-bottom: 16px;
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .paper-card:hover {
-            border-color: var(--border);
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-            transform: translateY(-1px);
-        }
-
-        .paper-top {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-
-        .paper-title {
-            font-family: 'Crimson Pro', Georgia, serif;
-            font-size: 1.08em;
+            flex: 1 1 300px;
+            min-width: 0;
+            margin: 0;
+            font-size: 1.03em;
             font-weight: 600;
-            color: var(--text-primary);
             line-height: 1.4;
-            flex: 1;
+            color: var(--text-secondary);
         }
 
-        .paper-title a {
-            color: inherit;
-            text-decoration: none;
+        .edu-period {
+            flex: 0 0 auto;
+            font-size: 0.8em;
+            color: var(--text-tertiary);
+            line-height: 1.5;
+            white-space: nowrap;
         }
 
-        .paper-title a:hover {
+        .edu-degree {
+            margin: 6px 0 0;
+            font-size: 0.92em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .edu-degree a {
             color: var(--accent);
-            text-decoration: underline;
-            text-decoration-color: var(--accent-light);
             text-underline-offset: 3px;
         }
 
-        .paper-meta {
-            display: flex;
+        /* ── Research & Projects ── */
+        .research-list { container-type: inline-size; }
+
+        .research-entry {
+            display: grid;
+            grid-template-columns: 40% minmax(0, 1fr);
             align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
+            gap: 28px;
+            padding: 28px 0;
+            border-bottom: 1px solid var(--border-light);
         }
 
-        .paper-authors {
-            font-size: 0.84em;
+        .research-entry:first-child { padding-top: 12px; }
+        .research-entry:last-child { padding-bottom: 8px; border-bottom: 0; }
+
+        .research-thumbnail {
+            position: relative;
+            display: block;
+            width: 100%;
+        }
+
+        .research-thumbnail img {
+            display: block;
+            width: 100%;
+            height: auto;
+            box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        .research-type {
+            position: absolute;
+            z-index: 1;
+            top: 6px;
+            left: -6px;
+            padding: 1px 14px;
+            color: #fff;
+            background: #00369f;
+            font-size: 0.78em;
+            font-weight: 600;
+            line-height: 1.65;
+        }
+
+        .research-body { min-width: 0; }
+
+        .research-title {
+            margin: 0;
+            font-size: 1.03em;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .research-title a {
+            color: var(--accent);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .research-title a:hover { color: var(--accent-hover); }
+
+        .research-authors {
+            margin: 10px 0 0;
+            font-size: 0.86em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .research-authors .me { font-weight: 600; }
+        .research-authors sup { font-size: 0.75em; }
+
+        .research-details {
+            margin: 12px 0 0;
+            padding-left: 18px;
+            list-style: disc;
+            font-size: 0.96em;
             color: var(--text-secondary);
             line-height: 1.6;
         }
 
-        .paper-authors .me {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .paper-venue-line {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-
-        .paper-venue {
-            font-size: 0.83em;
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 9px;
-            border-radius: 100px;
-            font-size: 0.75em;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        .badge-conf {
-            background: var(--success-bg);
-            color: var(--success-text);
-        }
-
-        .badge-arxiv {
-            background: var(--highlight-bg);
-            color: #a07628;
-            border: 1px solid var(--highlight-border);
-        }
-
-        .badge-star {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
-
-        .paper-links {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .paper-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.8em;
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 3px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--accent-light);
-            background: var(--accent-light);
-            transition: all 0.15s ease;
-        }
-
-        .paper-link:hover {
-            background: var(--accent);
-            color: white;
-            text-decoration: none;
-            border-color: var(--accent);
-        }
-
-        .paper-link svg {
-            width: 12px;
-            height: 12px;
-            fill: currentColor;
+        @container (max-width: 520px) {
+            .research-entry { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+            .research-body { order: 1; }
+            .research-thumbnail {
+                order: 2;
+                width: min(100%, 400px);
+                justify-self: center;
+            }
         }
 
         /* ── Footer ── */
@@ -440,56 +509,70 @@
         footer a:hover { color: var(--accent); text-decoration: underline; }
 
         /* ── Responsive ── */
+        @media (min-width: 761px) {
+            .sidebar-info,
+            .sidebar-links {
+                width: calc(100% - var(--sidebar-inset) + var(--column-gap) / 2);
+            }
+        }
+
         @media (max-width: 760px) {
             .layout {
                 flex-direction: column;
                 gap: 36px;
-                padding: 40px 18px 60px;
+                padding: var(--content-top-gap) 18px 60px;
             }
 
             .sidebar {
+                --avatar-size: 90px;
                 width: 100%;
                 position: static;
-                flex-direction: row;
-                flex-wrap: wrap;
+                left: auto;
+                top: auto;
+                max-height: none;
+                flex-direction: column;
                 align-items: center;
                 gap: 16px;
                 padding-bottom: 28px;
                 border-bottom: 1px solid var(--border);
             }
 
-            .sidebar-avatar-wrap {
-                width: 90px;
-            }
-
-            .sidebar-avatar {
-                max-width: 90px;
-            }
-
             .sidebar-info {
-                flex: 1;
-                min-width: 160px;
+                flex: none;
+                min-width: 0;
             }
+
+            .main { margin-left: 0; }
 
             .sidebar-links {
                 flex-direction: row;
                 flex-wrap: wrap;
+                justify-content: flex-start;
                 gap: 6px;
             }
 
             .sidebar-link {
-                padding: 4px 8px;
+                padding: 4px 0;
                 font-size: 0.8em;
             }
 
-            .topnav-links { gap: 16px; }
-            .topnav-links a { font-size: 11px; }
+            .topnav-inner {
+                height: auto;
+                min-height: 56px;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 6px;
+                padding: 10px 18px;
+            }
+            .topnav-links { flex-wrap: wrap; gap: 6px 20px; }
+            .topnav-links a { font-size: 12px; }
+            .section { scroll-margin-top: 110px; }
         }
 
         @media (max-width: 480px) {
-            .sidebar { flex-direction: column; align-items: flex-start; }
-            .sidebar-avatar-wrap { width: 100px; }
-            .sidebar-avatar { max-width: 100px; }
+            .sidebar { --avatar-size: 100px; }
+            .edu-entry { grid-template-columns: 48px 18px minmax(0, 1fr); }
+            .edu-logo { width: 38px; height: 38px; }
+            .education-timeline::before { left: 57px; }
         }
     </style>
 </head>
@@ -502,7 +585,7 @@
             <ul class="topnav-links">
                 <li><a href="#about">About</a></li>
                 <li><a href="#news">News</a></li>
-                <li><a href="#publications">Publications</a></li>
+                <li><a href="#publications">Research</a></li>
                 <li><a href="#education">Education</a></li>
             </ul>
         </div>
@@ -514,12 +597,12 @@
         <!-- ── Left Sidebar ── -->
         <aside class="sidebar">
             <div class="sidebar-avatar-wrap">
-                <img class="sidebar-avatar" src="photo.jpg" alt="Wei Yang" onerror="this.style.display='none'">
+                <img class="sidebar-avatar" src="assets/photo.jpg" alt="Wei Yang" onerror="this.style.display='none'">
             </div>
             <div class="sidebar-info">
                 <div class="sidebar-name">Wei Yang（杨蔚）</div>
-                <div class="sidebar-title">Undergraduate Student</div>
-                <div class="sidebar-affiliation">North China Electric Power University<br>Computer Science &amp; Technology</div>
+                <div class="sidebar-title">Incoming Master's Student</div>
+                <div class="sidebar-affiliation">USTC BIVLab</div>
             </div>
             <div class="sidebar-links">
                 <a class="sidebar-link" href="mailto:wei_yang_edu@yeah.net">
@@ -541,28 +624,32 @@
         <div class="main">
 
             <!-- ── About ── -->
-            <section class="section" id="about">
-                <h2 class="section-label">About Me</h2>
+            <section class="section intro" id="about" aria-label="About Wei Yang">
                 <p>
-                    I am a third-year undergraduate student at <a href="https://www.ncepu.edu.cn/" target="_blank" rel="noopener">North China Electric Power University (NCEPU)</a>, majoring in Computer Science and Technology.
+                    I am an incoming master's student at <a href="https://bivlab123.github.io/" target="_blank" rel="noopener">BIVLab</a>, University of Science and Technology of China (USTC), and expect to enroll in September 2027. I am currently an undergraduate student majoring in Computer Science and Technology at <a href="https://www.ncepu.edu.cn/" target="_blank" rel="noopener">North China Electric Power University (Baoding)</a>, with graduation expected in 2027.
                 </p>
                 <p>
-                    My research interests focus on <strong>Multimodal Large Language Models (MLLMs)</strong>. I am dedicated to exploring feasible pathways for advancing model intelligence amidst the diminishing returns of scaling. Specifically, I focus on extending the capability boundaries of models under data-scarce conditions, aiming to achieve robust self-evolution without heavy reliance on external supervision.
+                    I am interested in intelligent systems that learn through interaction and experience, continually expanding their capabilities in understanding, reasoning, and acting.
                 </p>
+                <p>My current research interests include:</p>
+                <ul class="research-interests">
+                    <li><strong>Agent Systems</strong></li>
+                    <li><strong>Multimodal Large Language Models</strong></li>
+                </ul>
             </section>
 
             <!-- ── News ── -->
             <section class="section" id="news">
-                <h2 class="section-label">News</h2>
+                <h2 class="section-label"><span aria-hidden="true">🔥</span> News</h2>
                 <ul class="news-list">
                     <li>
-                        <strong>Apr 2026</strong>: We released <strong>OneResearchClaw</strong>, a project for fully autonomous, skill-driven research synthesis from heterogeneous inputs, on GitHub</a>.
+                        <strong>Oct 2026</strong>: We introduced <strong>OneResearchBench</strong>, a workflow-aware benchmark for skill-driven research synthesis from heterogeneous inputs.
+                    </li>
+                    <li>
+                        <strong>Apr 2026</strong>: We released <strong>OneResearchClaw</strong>, a project for fully autonomous, skill-driven research synthesis from heterogeneous inputs, on GitHub.
                     </li>
                     <li>
                         <strong>Mar 2026</strong>: One paper on dynamic prognostic prediction for colorectal cancer liver metastasis was accepted to <strong>IEEE ICME 2026</strong>.
-                    </li>
-                    <li>
-                        <strong>Nov 2025</strong>: Our work on self-empowering VLMs via self-elicited knowledge distillation was released on arXiv</a>.
                     </li>
                     <li>
                         <strong>Jul 2025</strong>: One paper on flexible multi-modal HER2 expression prediction was accepted to <strong>ACM Multimedia 2025</strong>.
@@ -570,109 +657,143 @@
                 </ul>
             </section>
 
-            <!-- ── Publications ── -->
-            <section class="section" id="publications">
-                <h2 class="section-label">Publications</h2>
+            <!-- ── Research & Projects ── -->
+            <section class="section" id="publications" aria-labelledby="research-heading">
+                <h2 class="section-label" id="research-heading"><span aria-hidden="true">📄</span> Research</h2>
+                <div class="research-list">
+
+                <!-- OneResearchBench -->
+                <article class="research-entry">
+                    <div class="research-thumbnail">
+                        <span class="research-type" aria-hidden="true">arXiv</span>
+                        <img src="assets/oneresearchbench-overview.png" alt="OneResearchBench overview of task construction, rubric construction, and agent evaluation" loading="lazy" decoding="async" width="3344" height="1882">
+                    </div>
+                    <div class="research-body">
+                        <h3 class="research-title">
+                            OneResearchBench: A Workflow-Aware Benchmark for Skill-Driven Research Synthesis from Heterogeneous Inputs.
+                        </h3>
+                        <p class="research-authors">
+                            <strong class="me">Wei Yang</strong>, Shiting Huang, Yiming Zhao, Yu Zeng, Zhen Fang, Yiran Zhu, Ziao Zhang, Qisheng Su, Qingnan Ren, Jiayin Cai, Jiawei Zhao, Ziyang Guo, Ke Li, Jiapeng Shao, Shu Liang, Lin Chen, Zehui Chen, Feng Zhao
+                        </p>
+                        <ul class="research-details">
+                            <li>arXiv preprint. First author.</li>
+                        </ul>
+                    </div>
+                </article>
 
                 <!-- OneResearchClaw -->
-                <div class="paper-card">
-                    <div class="paper-top">
-                        <div class="paper-title">
+                <article class="research-entry">
+                    <a class="research-thumbnail" href="https://github.com/gaotiexinqu/OneResearchClaw" target="_blank" rel="noopener" aria-label="View OneResearchClaw on GitHub">
+                        <span class="research-type" aria-hidden="true">GitHub</span>
+                        <img src="assets/one-research-claw.png" alt="OneResearchClaw framework for autonomous research synthesis" loading="lazy" decoding="async" width="2696" height="1798">
+                    </a>
+                    <div class="research-body">
+                        <h3 class="research-title">
                             <a href="https://github.com/gaotiexinqu/OneResearchClaw" target="_blank" rel="noopener">
                                 OneResearchClaw: Fully Autonomous, Skill-driven Research Synthesis from Heterogeneous Inputs
                             </a>
-                        </div>
-                        <div class="paper-meta">
-                            <span class="badge badge-arxiv">GitHub</span>
-                        </div>
+                        </h3>
+                        <p class="research-authors">
+                            <strong class="me">Wei Yang<sup>*</sup></strong>, Yiming Zhao<sup>*</sup>, Yu Zeng<sup>*</sup>, Zhen Fang<sup>*</sup>, Wenxuan Huang, Ziao Zhang, Kou Shi, Qing Miao, Jiayin Cai, Jiawei Zhao, Xikun Bao, Lin Chen, Zehui Chen, Feng Zhao
+                        </p>
+                        <ul class="research-details">
+                            <li>Open-source project, <span aria-hidden="true">⭐</span> 440+ GitHub stars.</li>
+                        </ul>
                     </div>
-                    <div class="paper-authors">
-                        <strong>Wei Yang*</strong>, Yiming Zhao*, Yu Zeng*, Zhen Fang*, Wenxuan Huang, Ziao Zhang, Kou Shi, Qing Miao, Jiayin Cai, Jiawei Zhao, Xikun Bao, Lin Chen, Zehui Chen, Feng Zhao
-                    </div>
-                    <div class="paper-venue-line">
-                        <span class="paper-venue">Open-source project, Apr 2026</span>
-                    </div>
-                    <div class="paper-links">
-                        <a class="paper-link" href="https://github.com/gaotiexinqu/OneResearchClaw" target="_blank" rel="noopener">GitHub</a>
-                    </div>
-                </div>
+                </article>
 
-                <!-- DyPro -->
-                <div class="paper-card">
-                    <div class="paper-top">
-                        <div class="paper-title">
-                            <a href="https://arxiv.org/abs/2505.03123" target="_blank" rel="noopener">
-                                A Dynamic Prognostic Prediction Method for Colorectal Cancer Liver Metastasis
-                            </a>
-                        </div>
-                        <div class="paper-meta">
-                            <span class="badge badge-conf">ICME 2026</span>
-                        </div>
-                    </div>
-                    <div class="paper-authors">
-                        <strong>Wei Yang*</strong>, Yiran Zhu*, Yan Su, Zesheng Li, Chengchang Pan, Honggang Qi
-                    </div>
-                    <div class="paper-venue-line">
-                        <span class="paper-venue">IEEE International Conference on Multimedia and Expo (ICME) 2026</span>
-                    </div>
-                    <div class="paper-links">
-                        <a class="paper-link" href="https://arxiv.org/abs/2505.03123" target="_blank" rel="noopener">Paper</a>
-                    </div>
-                </div>
-
-                <!-- SEKD -->
-                <div class="paper-card">
-                    <div class="paper-top">
-                        <div class="paper-title">
+                <!-- DuoTeach -->
+                <article class="research-entry">
+                    <a class="research-thumbnail" href="https://arxiv.org/abs/2511.18415" target="_blank" rel="noopener" aria-label="Read the DuoTeach paper">
+                        <span class="research-type" aria-hidden="true">arXiv</span>
+                        <img src="assets/duoteach.png" alt="Overview of the DuoTeach dual-role self-teaching framework" loading="lazy" decoding="async" width="4139" height="2243">
+                    </a>
+                    <div class="research-body">
+                        <h3 class="research-title">
                             <a href="https://arxiv.org/abs/2511.18415" target="_blank" rel="noopener">
                                 DuoTeach: Dual Role Self-Teaching for Coarse-to-Fine Decision Coordination in Vision–Language Models
                             </a>
-                        </div>
-                        <div class="paper-meta">
-                            <span class="badge badge-arxiv">arXiv</span>
-                        </div>
+                        </h3>
+                        <p class="research-authors">
+                            <strong class="me">Wei Yang<sup>*</sup></strong>, Yiran Zhu<sup>*</sup>, Zilin Li, Xunjia Zhang, Hongtao Wang
+                        </p>
+                        <ul class="research-details">
+                            <li>arXiv preprint. <sup>*</sup> Co-first author.</li>
+                        </ul>
                     </div>
-                    <div class="paper-authors">
-                        <strong>Wei Yang*</strong>, Yiran Zhu*, Zilin Li, Xunjia Zhang, Hongtao Wang
+                </article>
+
+                <!-- DyPro -->
+                <article class="research-entry">
+                    <a class="research-thumbnail" href="https://arxiv.org/abs/2505.03123" target="_blank" rel="noopener" aria-label="Read the dynamic prognostic prediction paper">
+                        <span class="research-type" aria-hidden="true">ICME 2026</span>
+                        <img src="assets/dypro.png" alt="Overview of the dynamic prognostic prediction framework" loading="lazy" decoding="async" width="4402" height="1760">
+                    </a>
+                    <div class="research-body">
+                        <h3 class="research-title">
+                            <a href="https://arxiv.org/abs/2505.03123" target="_blank" rel="noopener">
+                                A Dynamic Prognostic Prediction Method for Colorectal Cancer Liver Metastasis
+                            </a>
+                        </h3>
+                        <p class="research-authors">
+                            <strong class="me">Wei Yang<sup>*</sup></strong>, Yiran Zhu<sup>*</sup>, Yan Su, Zesheng Li, Chengchang Pan, Honggang Qi
+                        </p>
+                        <ul class="research-details">
+                            <li><strong>IEEE ICME 2026</strong> (CCF B). <sup>*</sup> Co-first author.</li>
+                        </ul>
                     </div>
-                    <div class="paper-venue-line">
-                        <span class="paper-venue">arXiv preprint arXiv:2511.18415</span>
-                    </div>
-                    <div class="paper-links">
-                        <a class="paper-link" href="https://arxiv.org/abs/2511.18415" target="_blank" rel="noopener">Paper</a>
-                    </div>
-                </div>
+                </article>
 
                 <!-- HER2 -->
-                <div class="paper-card">
-                    <div class="paper-top">
-                        <div class="paper-title">
+                <article class="research-entry">
+                    <a class="research-thumbnail" href="https://dl.acm.org/doi/10.1145/3746027.3755619" target="_blank" rel="noopener" aria-label="Read the HER2 expression prediction paper">
+                        <span class="research-type" aria-hidden="true">ACM MM 2025</span>
+                        <img src="assets/her2.png" alt="Architecture for HER2 expression prediction with flexible multimodal inputs" loading="lazy" decoding="async" width="1280" height="490">
+                    </a>
+                    <div class="research-body">
+                        <h3 class="research-title">
                             <a href="https://dl.acm.org/doi/10.1145/3746027.3755619" target="_blank" rel="noopener">
                                 HER2 Expression Prediction with Flexible Multi-Modal Inputs via Dynamic Bidirectional Reconstruction
                             </a>
-                        </div>
-                        <div class="paper-meta">
-                            <span class="badge badge-conf">ACM MM 2025</span>
-                        </div>
+                        </h3>
+                        <p class="research-authors">
+                            Jie Qin<sup>*</sup>, <strong class="me">Wei Yang<sup>*</sup></strong>, Yan Su, Yiran Zhu, Weizhen Li, Yunyue Pan, Chengchang Pan, Honggang Qi
+                        </p>
+                        <ul class="research-details">
+                            <li><strong>ACM Multimedia 2025</strong> (CCF A). <sup>*</sup> Co-first author.</li>
+                        </ul>
                     </div>
-                    <div class="paper-authors">
-                        Jie Qin*, <strong>Wei Yang*</strong>, Yan Su, Yiran Zhu, Weizhen Li, Yunyue Pan, Chengchang Pan, Honggang Qi
-                    </div>
-                    <div class="paper-venue-line">
-                        <span class="paper-venue">ACM Multimedia (ACM MM) 2025</span>
-                    </div>
-                    <div class="paper-links">
-                        <a class="paper-link" href="https://dl.acm.org/doi/10.1145/3746027.3755619" target="_blank" rel="noopener">Paper</a>
-                    </div>
+                </article>
                 </div>
             </section>
 
             <!-- ── Education ── -->
             <section class="section" id="education">
-                <h2 class="section-label">Education</h2>
-                <ul style="list-style: disc; padding-left: 20px; margin: 0; display: flex; flex-direction: column; gap: 8px;">
-                    <li>2023.09 – 2027.06, B.Eng. in Computer Science and Technology, North China Electric Power University (Baoding), China.</li>
-                </ul>
+                <h2 class="section-label"><span aria-hidden="true">🎓</span> Education</h2>
+                <ol class="education-timeline" aria-label="Education history">
+                    <li class="edu-entry">
+                        <img class="edu-logo" src="assets/ustc.png" alt="" aria-hidden="true" width="48" height="48">
+                        <span class="edu-marker" aria-hidden="true"></span>
+                        <div class="edu-content">
+                            <div class="edu-header">
+                                <h3 class="edu-school">University of Science and Technology of China</h3>
+                                <time class="edu-period" datetime="2027-09">Sep 2027 (incoming)</time>
+                            </div>
+                            <p class="edu-degree">Master's Student · <a href="https://bivlab123.github.io/" target="_blank" rel="noopener">BIVLab</a></p>
+                        </div>
+                    </li>
+                    <li class="edu-entry edu-entry-current">
+                        <img class="edu-logo" src="assets/ncepu.png" alt="" aria-hidden="true" width="48" height="48">
+                        <span class="edu-marker" aria-hidden="true"></span>
+                        <div class="edu-content">
+                            <div class="edu-header">
+                                <h3 class="edu-school">North China Electric Power University (Baoding)</h3>
+                                <span class="edu-period">2023 – 2027 (expected)</span>
+                            </div>
+                            <p class="edu-degree">B.Eng. in Computer Science and Technology</p>
+                        </div>
+                    </li>
+                </ol>
             </section>
 
         </div>
