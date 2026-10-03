@@ -8,22 +8,22 @@
         if ('scrollRestoration' in history) {
             history.scrollRestoration = 'manual';
         }
-        const resetHomepageScroll = () => {
+        const resetHomepageScroll = (behavior = 'instant') => {
             if (location.hash && location.hash !== '#about') return;
             if (location.hash === '#about') {
                 const homepageUrl = new URL(location.href);
                 homepageUrl.hash = '';
                 history.replaceState(history.state, '', homepageUrl.href);
             }
-            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            window.scrollTo({ top: 0, left: 0, behavior });
         };
         resetHomepageScroll();
-        window.addEventListener('pageshow', resetHomepageScroll);
+        window.addEventListener('pageshow', () => resetHomepageScroll());
         window.addEventListener('popstate', () => {
             if (!location.hash || location.hash === '#about') {
-                resetHomepageScroll();
+                resetHomepageScroll('smooth');
             } else {
-                document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
+                document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
             }
         });
     </script>
