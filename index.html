@@ -8,6 +8,13 @@
         if ('scrollRestoration' in history) {
             history.scrollRestoration = 'manual';
         }
+        const normalizeResearchHash = () => {
+            if (location.hash !== '#publications') return;
+            const researchUrl = new URL(location.href);
+            researchUrl.hash = 'research';
+            history.replaceState(history.state, '', researchUrl.href);
+        };
+        normalizeResearchHash();
         const resetHomepageScroll = (behavior = 'instant') => {
             if (location.hash && location.hash !== '#about') return;
             if (location.hash === '#about') {
@@ -18,8 +25,12 @@
             window.scrollTo({ top: 0, left: 0, behavior });
         };
         resetHomepageScroll();
-        window.addEventListener('pageshow', () => resetHomepageScroll());
+        window.addEventListener('pageshow', () => {
+            normalizeResearchHash();
+            resetHomepageScroll();
+        });
         window.addEventListener('popstate', () => {
+            normalizeResearchHash();
             if (!location.hash || location.hash === '#about') {
                 resetHomepageScroll('smooth');
             } else {
@@ -585,7 +596,7 @@
             <ul class="topnav-links">
                 <li><a href="#about">About</a></li>
                 <li><a href="#news">News</a></li>
-                <li><a href="#publications">Research</a></li>
+                <li><a href="#research">Research</a></li>
                 <li><a href="#education">Education</a></li>
             </ul>
         </div>
@@ -643,7 +654,7 @@
                 <h2 class="section-label"><span aria-hidden="true">🔥</span> News</h2>
                 <ul class="news-list">
                     <li>
-                        <strong>Oct 2026</strong>: We introduced <strong>OneResearchBench</strong>, a workflow-aware benchmark for skill-driven research synthesis from heterogeneous inputs.
+                        <strong>Oct 2026</strong>: We introduced <strong>OneResearchBench</strong>, a benchmark for evaluating research agents on research synthesis from real-world source materials.
                     </li>
                     <li>
                         <strong>Apr 2026</strong>: We released <strong>OneResearchClaw</strong>, a project for fully autonomous, skill-driven research synthesis from heterogeneous inputs, on GitHub.
@@ -658,7 +669,7 @@
             </section>
 
             <!-- ── Research & Projects ── -->
-            <section class="section" id="publications" aria-labelledby="research-heading">
+            <section class="section" id="research" aria-labelledby="research-heading">
                 <h2 class="section-label" id="research-heading"><span aria-hidden="true">📄</span> Research</h2>
                 <div class="research-list">
 
@@ -670,7 +681,7 @@
                     </div>
                     <div class="research-body">
                         <h3 class="research-title">
-                            OneResearchBench: A Workflow-Aware Benchmark for Skill-Driven Research Synthesis from Heterogeneous Inputs.
+                            OneResearchBench: Benchmarking Research Agents for Research Synthesis from Real-World Source Materials.
                         </h3>
                         <p class="research-authors">
                             <strong class="me">Wei Yang</strong>, Shiting Huang, Yiming Zhao, Yu Zeng, Zhen Fang, Yiran Zhu, Ziao Zhang, Qisheng Su, Qingnan Ren, Jiayin Cai, Jiawei Zhao, Ziyang Guo, Ke Li, Jiapeng Shao, Shu Liang, Lin Chen, Zehui Chen, Feng Zhao
